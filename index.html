@@ -1,0 +1,1282 @@
+<!DOCTYPE html>
+<html lang="mg">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+        content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+    <meta name="theme-color" content="#C9963A" id="theme-meta">
+    <meta name="description" content="ZivOr — Application évangélique chrétienne Madagascar">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="ZivOr">
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="icon-192.png">
+    <title>ZivOr</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;0,700;1,400&family=Inter:wght@400;500;600;700&display=swap"
+        rel="stylesheet" media="print" onload="this.media='all'">
+
+    <!-- Firebase SDK (compat v9) -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-messaging-compat.js"></script>
+
+    <link rel="stylesheet" href="css/app.css">
+</head>
+
+<body>
+
+    <!-- ═══════════════════════════════════════════
+     ORBS
+════════════════════════════════════════════ -->
+    <!-- SPLASH SCREEN -->
+    <div id="splash">
+        <div class="sp-logo">&#10013;</div>
+        <div class="sp-name">ZivOr</div>
+        <div class="sp-sub">Espoir &middot; Hope &middot; ZivOr</div>
+        <div class="sp-bar-wrap">
+            <div class="sp-bar"></div>
+        </div>
+        <div class="sp-verse">"Fa Izaho mahalala ny hevitra izay<br>mihevitra Ahy, hoy Jehovah."<br><span
+                style="font-size:11px;opacity:.6">-- Jeremia 29:11</span></div>
+    </div>
+
+    <div class="orbs">
+        <div class="orb orb1"></div>
+        <div class="orb orb2"></div>
+        <div class="orb orb3"></div>
+    </div>
+
+    <!-- TOAST -->
+    <div class="toast" id="toast"></div>
+
+    <!-- ═══════════════════════════════════════════
+     APP SHELL
+════════════════════════════════════════════ -->
+    <div class="app">
+
+        <!-- STATUS BAR — horloge + dot Firebase uniquement -->
+        <div class="sbar" style="padding:env(safe-area-inset-top,8px) 16px 4px;font-size:11px">
+            <span id="clk" style="color:var(--mut)">9:41</span>
+            <span id="fbdot" style="font-size:7px;color:#555" title="Firebase">●</span>
+        </div>
+
+        <!-- HEADER -->
+        <div class="hdr">
+            <div class="htop">
+                <div class="logo">
+                    <div class="lmark">✝</div>
+                    <div>
+                        <div class="lname">ZivOr</div>
+                        <div class="lsub">Espoir · Hope</div>
+                    </div>
+                </div>
+                <div class="hbtns">
+                    <button class="lp on" onclick="sL('mg')">MG</button>
+                    <button class="lp" onclick="sL('fr')">FR</button>
+                    <button class="lp" onclick="sL('en')">EN</button>
+                    <button class="modetgl" onclick="toggleMode()" id="modebtn">🌙</button>
+                    <button onclick="oM('modal-profil')"
+                        style="background:var(--inp-bg);border:1px solid var(--inp-border);width:34px;height:34px;border-radius:50%;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;transition:all .2s"
+                        id="profil-btn">👤</button>
+                    <button onclick="fcmDemanderPermission()" id="notif-btn"
+                        style="background:var(--inp-bg);border:1px solid var(--inp-border);width:34px;height:34px;border-radius:50%;cursor:pointer;font-size:15px;display:flex;align-items:center;justify-content:center;transition:all .2s"
+                        title="Activer les notifications">🔔</button>
+                </div>
+            </div>
+
+
+
+            <div style="display:flex;align-items:center;gap:8px;padding-top:2px">
+                <div id="gh" style="font-size:15px;font-weight:600;color:var(--cream);margin-bottom:4px"></div>
+                <div class="gdate" id="gd" style="font-size:11px;color:var(--mut)"></div>
+            </div>
+        </div>
+
+        <!-- ═══════════════════════════════════════
+       PAGES
+  ════════════════════════════════════════ -->
+        <div class="pages">
+
+            <!-- PAGE : ACCUEIL — Bento-Glass Airbnb style -->
+            <div class="page on" id="page-accueil">
+
+                <!-- ── HERO : Verset du jour ── -->
+                <div class="home-hero">
+                    <div class="hero-badge">✦ <span id="vb"></span></div>
+                    <div class="vq">"</div>
+                    <div class="vtxt" id="vt" style="font-size:17px;line-height:1.85;position:relative;z-index:1"></div>
+                    <div class="vref" id="vr" style="margin-top:12px;position:relative;z-index:1"></div>
+                    <!-- Bouton partage verset hero -->
+                    <button
+                        onclick="shareContent(document.getElementById('vt').textContent+' — '+document.getElementById('vr').textContent)"
+                        class="hero-share">↗</button>
+                </div>
+
+                <!-- ── BENTO GRID : Accès rapide ── -->
+                <div class="bento-grid">
+                    <div class="bento-card bento-bible"
+                        onclick="gP('bible',document.querySelector('.nb[onclick*=bible]'))">
+                        <div class="bento-ic">📖</div>
+                        <div class="bento-lbl" id="bento-bible-lbl">Baiboly</div>
+                        <div class="bento-sub">66 boky</div>
+                    </div>
+                    <div class="bento-card bento-med"
+                        onclick="gP('meditation',document.querySelector('.nb[onclick*=meditation]'))">
+                        <div class="bento-ic">⏱️</div>
+                        <div class="bento-lbl" id="bento-med-lbl">Fisaintsainana</div>
+                        <div class="bento-sub" id="bento-med-sub">Misao, mivavaka</div>
+                    </div>
+                    <div class="bento-card bento-past"
+                        onclick="gP('pasteur',document.querySelector('.nb[onclick*=pasteur]'))">
+                        <div class="bento-ic">🙏</div>
+                        <div class="bento-lbl" id="bento-past-lbl">Pastora</div>
+                        <div class="bento-sub" id="bento-past-sub">Miresaka</div>
+                    </div>
+                    <div class="bento-card bento-news"
+                        onclick="gP('actu',document.querySelector('.nb[onclick*=actu]'))">
+                        <div class="bento-ic">🌍</div>
+                        <div class="bento-lbl" id="bento-news-lbl">Vaovao</div>
+                        <div class="bento-sub" id="bento-news-sub">Fanamasinana</div>
+                    </div>
+                </div>
+
+                <!-- ── POÈME DU MATIN compact ── -->
+                <div class="home-poem-card">
+                    <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+                        <div style="font-size:20px">🌅</div>
+                        <div class="plbl" id="pl" style="margin-bottom:0;flex:1"></div>
+                    </div>
+                    <div class="ptxt" id="pt" style="font-size:13px"></div>
+                </div>
+
+                <!-- ── FEED ACCUEIL ── -->
+                <div style="margin-top:14px">
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+                        <div style="font-size:11px;letter-spacing:2px;color:var(--gold);font-weight:700">⬦ VAOVAO</div>
+                        <button onclick="gP('actu',document.querySelector('.nb[onclick*=actu]'))"
+                            style="background:none;border:none;color:var(--mut);font-size:12px;cursor:pointer;font-family:var(--f-body)">Jereo
+                            rehetra →</button>
+                    </div>
+                    <div id="home-feed"></div>
+                </div>
+
+                <!-- ── DON discret ── -->
+                <div style="display:flex;justify-content:center;padding:10px 0 6px">
+                    <button onclick="ouvrirModalDon()"
+                        style="display:inline-flex;align-items:center;gap:7px;background:rgba(212,175,55,.08);border:1px solid rgba(212,175,55,.2);color:var(--gold);font-size:12px;padding:9px 22px;border-radius:30px;cursor:pointer;font-family:var(--f-body);font-weight:600;backdrop-filter:blur(12px)">
+                        <span>💝</span><span id="don-btn-lbl">Soutenir</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- PAGE : BIBLE -->
+            <div class="page" id="page-bible">
+                <!-- Barre téléchargement hors-ligne -->
+                <div id="bible-dl-bar" class="bible-dl-bar" style="display:none">
+                    <div class="bible-dl-title">
+                        <span>📥 Bible hors-ligne</span>
+                        <span class="bible-offline-badge" id="bible-offline-badge" style="display:none">✓
+                            Disponible</span>
+                    </div>
+                    <div class="bible-dl-sub" id="bible-dl-sub">Téléchargez la Bible complète pour lire sans connexion —
+                        MG, FR et EN.</div>
+                    <div class="bible-dl-prog-wrap" id="bible-dl-prog-wrap" style="display:none">
+                        <div class="bible-dl-prog" id="bible-dl-prog"></div>
+                    </div>
+                    <div class="bible-dl-status" id="bible-dl-status"></div>
+                    <button class="btng" id="bible-dl-btn" onclick="demarrerTelechargerBible()"
+                        style="margin-top:8px;padding:10px">📥 Télécharger la Bible (3 langues)</button>
+                </div>
+                <div class="sbar2" style="position:relative">
+                    <input type="text" id="si" oninput="srchBible(this.value)" placeholder="Hitady andininy...">
+                    <button id="si-clear" class="si-clear" onclick="clearSrchBible()" style="display:none">✕</button>
+                    <button class="sbtn" onclick="srchBible(document.getElementById('si').value)">🔍</button>
+                </div>
+                <div class="ttabs">
+                    <button class="ttab on" onclick="lB('AT',this)" id="tab-at"></button>
+                    <button class="ttab" onclick="lB('NT',this)" id="tab-nt"></button>
+                </div>
+                <div id="ll"></div>
+                <div id="cv" style="display:none"></div>
+                <div id="vv" style="display:none"></div>
+                <div id="sr" style="display:none"></div>
+            </div>
+
+            <!-- PAGE : MÉDITATION -->
+            <div class="page" id="page-meditation">
+                <!-- ── Timer existant — inchangé ── -->
+                <div class="card cpur" style="text-align:center;padding:28px 18px">
+                    <div class="tring">
+                        <div class="tprog" id="tp"></div>
+                        <div style="position:relative;z-index:1;text-align:center">
+                            <div class="tdisp" id="tdis">05:00</div>
+                            <div class="tlbl" id="tlbl"></div>
+                        </div>
+                    </div>
+                    <div class="dpills">
+                        <button class="dp" onclick="sDur(3,this)">3 min</button>
+                        <button class="dp on" onclick="sDur(5,this)">5 min</button>
+                        <button class="dp" onclick="sDur(10,this)">10 min</button>
+                        <button class="dp" onclick="sDur(15,this)">15 min</button>
+                        <button class="dp" onclick="sDur(20,this)">20 min</button>
+                    </div>
+                    <div class="crow">
+                        <button class="cbtn go" id="btnStart" onclick="tStart()">▶ Démarrer</button>
+                        <button class="cbtn" onclick="tPause()">⏸</button>
+                        <button class="cbtn" onclick="tStop()">⏹</button>
+                    </div>
+                </div>
+                <div class="sectl" id="med-sec"></div>
+                <div class="tgrid" id="med-themes"></div>
+                <div id="td2" style="display:none;margin-top:12px"></div>
+
+                <!-- ══════════════════════════════════════
+           EXPLORATEUR AUDIO — Sons de méditation
+      ═══════════════════════════════════════ -->
+                <div style="margin-top:18px">
+
+                    <!-- Header -->
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+                        <div style="font-size:11px;letter-spacing:2px;color:var(--gold);font-weight:700"
+                            id="audio-title-lbl">🎵 SONS DE MÉDITATION</div>
+                        <div style="display:flex;gap:6px;align-items:center">
+                            <div class="audio-online-dot" id="audio-status-dot"></div>
+                            <span style="font-size:10px;color:var(--mut)" id="audio-status-lbl"></span>
+                        </div>
+                    </div>
+
+                    <!-- Lecteur actif -->
+                    <div id="audio-player-bar" style="display:none">
+                        <div class="audio-player-card">
+                            <div style="flex:1;min-width:0">
+                                <div class="audio-playing-name" id="audio-now-name">—</div>
+                                <div class="audio-playing-src" id="audio-now-src">—</div>
+                            </div>
+                            <div style="display:flex;gap:8px;align-items:center;flex-shrink:0">
+                                <button onclick="audioToggle()" id="audio-play-btn" class="audio-ctrl-btn">⏸</button>
+                                <button onclick="audioStop()" class="audio-ctrl-btn" style="font-size:13px">⏹</button>
+                                <button onclick="audioFav()" id="audio-fav-btn" class="audio-ctrl-btn"
+                                    style="font-size:16px">⭐</button>
+                            </div>
+                        </div>
+                        <!-- Mixeur — jusqu'à 3 sons simultanés -->
+                        <div id="audio-mix-bar" style="display:none;margin-top:8px">
+                            <div style="font-size:10px;letter-spacing:1.5px;color:var(--mut);font-weight:700;margin-bottom:6px"
+                                id="mix-lbl">🎚️ MIXEUR</div>
+                            <div id="audio-mix-list" style="display:flex;flex-direction:column;gap:6px"></div>
+                        </div>
+                    </div>
+
+                    <!-- Catégories -->
+                    <div class="audio-cats" id="audio-cats">
+                        <button class="audio-cat on" onclick="audioSelCat('all',this)" id="acat-all">✨ Tout</button>
+                        <button class="audio-cat" onclick="audioSelCat('nature',this)">🌿 Nature</button>
+                        <button class="audio-cat" onclick="audioSelCat('instruments',this)">🎵 Instruments</button>
+                        <button class="audio-cat" onclick="audioSelCat('spiritual',this)">🙏 Spirituel</button>
+                        <button class="audio-cat" onclick="audioSelCat('ambient',this)">🌌 Ambiance</button>
+                        <button class="audio-cat" onclick="audioSelCat('favorites',this)">⭐ Favoris</button>
+                    </div>
+
+                    <!-- Recherche -->
+                    <div style="display:flex;gap:8px;margin-bottom:12px">
+                        <input id="audio-search-inp" class="minp" type="text" placeholder="🔍 Rechercher un son..."
+                            style="flex:1;font-size:13px" onkeydown="if(event.key==='Enter')audioSearch()">
+                        <button onclick="audioSearch()" class="audio-search-btn">🔍</button>
+                    </div>
+
+                    <!-- Grille de sons -->
+                    <div id="audio-grid">
+                        <div style="text-align:center;padding:30px;color:var(--mut)">
+                            <div style="font-size:32px;margin-bottom:8px">🎵</div>
+                            <div style="font-size:13px" id="audio-empty-lbl">Chargement des sons...</div>
+                        </div>
+                    </div>
+
+                    <!-- Favoris hors-ligne -->
+                    <div id="audio-offline-section" style="display:none;margin-top:16px">
+                        <div
+                            style="font-size:11px;letter-spacing:2px;color:var(--grn);font-weight:700;margin-bottom:8px">
+                            📥 TÉLÉCHARGÉS — HORS LIGNE</div>
+                        <div id="audio-offline-list"></div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- PAGE : PASTEURS -->
+            <div class="page" id="page-pasteur">
+                <div class="card cgrn" style="padding:15px 17px;margin-bottom:11px">
+                    <p style="font-family:var(--f-serif);font-size:18px;color:var(--gold2);margin-bottom:5px"
+                        id="past-title"></p>
+                    <p style="font-size:13px;color:var(--mut);line-height:1.65" id="past-sub"></p>
+                </div>
+                <div style="font-size:10px;letter-spacing:2px;color:var(--gold);margin-bottom:12px;font-weight:700"
+                    id="past-badge"></div>
+
+                <!-- Liste pasteurs dynamique depuis Firestore -->
+                <div id="pasteurs-list">
+                    <div style="text-align:center;padding:20px;color:var(--mut)">⏳ Chargement des pasteurs…</div>
+                </div>
+
+                <div class="divid"></div>
+
+                <!-- Connexion / Inscription Pasteur -->
+                <div id="past-auth-section">
+                    <!-- Si non connecté -->
+                    <div id="past-not-connected">
+                        <p style="font-family:var(--f-serif);font-size:16px;color:var(--cream);margin-bottom:5px"
+                            id="past-jt"></p>
+                        <p style="font-size:12px;color:var(--mut);margin-bottom:14px;line-height:1.6" id="past-js"></p>
+                        <button class="btng" id="past-btn" onclick="oM('modal-past-auth')"
+                            style="margin-bottom:8px"></button>
+                    </div>
+                    <!-- Si connecté comme pasteur -->
+                    <div id="past-connected" style="display:none">
+                        <div
+                            style="display:flex;align-items:center;gap:12px;padding:14px;background:rgba(76,175,125,.08);border:1px solid rgba(76,175,125,.2);border-radius:16px;margin-bottom:12px">
+                            <div style="font-size:32px">🙏</div>
+                            <div style="flex:1">
+                                <div style="font-size:15px;font-weight:700;color:var(--cream)" id="past-connected-name">
+                                    Pasteur</div>
+                                <div style="font-size:12px;color:var(--grn)">● Connecté</div>
+                            </div>
+                            <button onclick="pastLogout()"
+                                style="background:rgba(224,92,92,.1);border:1px solid rgba(224,92,92,.3);color:var(--red);padding:7px 13px;border-radius:20px;cursor:pointer;font-size:12px;font-family:var(--f-body)">Déconnexion</button>
+                        </div>
+                        <button class="btng" onclick="gP('past-space',document.getElementById('nav-past-space'))"
+                            style="background:linear-gradient(135deg,#6B3FA0,#4A3A80)">
+                            🔐 Ouvrir mon espace pasteur
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PAGE : ESPACE PASTEUR (visible après connexion) -->
+            <div class="page" id="page-past-space" style="display:none">
+                <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
+                    <button onclick="gP('pasteur',document.querySelector('.nb[onclick*=pasteur]'))"
+                        style="background:var(--inp-bg);border:1px solid var(--border);color:var(--cream);padding:8px 14px;border-radius:20px;cursor:pointer;font-size:13px;font-family:var(--f-body)">←
+                        Retour</button>
+                    <div style="font-family:var(--f-serif);font-size:18px;color:var(--gold2)" id="past-space-title">Mon
+                        Espace</div>
+                </div>
+
+                <!-- Onglets espace pasteur -->
+                <div class="tcats" style="margin-bottom:14px">
+                    <button class="ttab2 on" onclick="pastSwitchTab('msgs',this)" id="ptab-msgs">💬 Messages</button>
+                    <button class="ttab2" onclick="pastSwitchTab('pub',this)" id="ptab-pub">📢 Publier</button>
+                    <button class="ttab2" onclick="pastSwitchTab('cmd',this)" id="ptab-cmd">📦 Commandes</button>
+                    <button class="ttab2" onclick="pastSwitchTab('don',this)" id="ptab-don">💝 Dons</button>
+                    <button class="ttab2" onclick="pastSwitchTab('liv',this)" id="ptab-liv">📚 Livres</button>
+                </div>
+
+                <!-- Messages fidèles -->
+                <div id="past-panel-msgs">
+                    <div style="font-size:12px;color:var(--mut);margin-bottom:10px">Conversations de vos fidèles</div>
+                    <div id="past-conv-list">
+                        <div style="text-align:center;padding:30px;color:var(--mut)">⏳ Chargement…</div>
+                    </div>
+                </div>
+
+                <!-- Publier -->
+                <div id="past-panel-pub" style="display:none">
+                    <div class="mrow">
+                        <label>MESSAGE *</label>
+                        <textarea class="mtarea" id="past-pub-txt" rows="4"
+                            placeholder="Votre message pastoral..."></textarea>
+                    </div>
+                    <div class="mrow">
+                        <label>VERSET (optionnel)</label>
+                        <input class="minp" id="past-pub-vs" type="text" placeholder="Ex: Jean 3:16">
+                    </div>
+                    <div class="mrow">
+                        <label>📷 PHOTO (optionnel)</label>
+                        <label
+                            style="display:flex;align-items:center;gap:10px;cursor:pointer;background:var(--inp-bg);border:1px dashed var(--inp-border);border-radius:11px;padding:11px 14px">
+                            <span>📷</span>
+                            <span id="past-pub-img-lbl" style="font-size:13px;color:var(--mut)">Choisir une
+                                image...</span>
+                            <input type="file" accept="image/*" id="past-pub-img-file" style="display:none"
+                                onchange="pastPreviewPhoto(this)">
+                        </label>
+                        <div id="past-pub-img-preview" style="display:none;margin-top:8px;position:relative">
+                            <img id="past-pub-img"
+                                style="width:100%;border-radius:10px;max-height:200px;object-fit:cover">
+                            <button onclick="pastClearPhoto()"
+                                style="position:absolute;top:6px;right:6px;background:rgba(0,0,0,.6);border:none;color:#fff;border-radius:50%;width:26px;height:26px;cursor:pointer">✕</button>
+                        </div>
+                    </div>
+                    <button class="btng" onclick="pastPublier()">📢 Publier maintenant</button>
+                </div>
+
+                <!-- Commandes -->
+                <div id="past-panel-cmd" style="display:none">
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">
+                        <div class="card" style="text-align:center;padding:13px">
+                            <div style="font-family:var(--f-serif);font-size:24px;font-weight:700;color:var(--gold2)"
+                                id="past-cmd-wait">—</div>
+                            <div style="font-size:11px;color:var(--mut)">⏳ En attente</div>
+                        </div>
+                        <div class="card" style="text-align:center;padding:13px">
+                            <div style="font-family:var(--f-serif);font-size:24px;font-weight:700;color:var(--grn)"
+                                id="past-cmd-ok">—</div>
+                            <div style="font-size:11px;color:var(--mut)">✅ Validées</div>
+                        </div>
+                    </div>
+                    <div id="past-cmd-list">
+                        <div style="text-align:center;padding:30px;color:var(--mut)">⏳ Chargement…</div>
+                    </div>
+                </div>
+
+                <!-- Dons -->
+                <div id="past-panel-don" style="display:none">
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">
+                        <div class="card" style="text-align:center;padding:13px">
+                            <div style="font-family:var(--f-serif);font-size:24px;font-weight:700;color:var(--gold2)"
+                                id="past-don-cnt">—</div>
+                            <div style="font-size:11px;color:var(--mut)">💝 Reçus</div>
+                        </div>
+                        <div class="card" style="text-align:center;padding:13px">
+                            <div style="font-family:var(--f-serif);font-size:24px;font-weight:700;color:var(--gold)"
+                                id="past-don-total">—</div>
+                            <div style="font-size:11px;color:var(--mut)">💰 Total Ar</div>
+                        </div>
+                    </div>
+                    <div id="past-don-list">
+                        <div style="text-align:center;padding:30px;color:var(--mut)">⏳ Chargement…</div>
+                    </div>
+                </div>
+
+                <!-- Livres -->
+                <div id="past-panel-liv" style="display:none">
+                    <button class="btng" onclick="oM('modal-past-livre')" style="margin-bottom:12px">➕ Ajouter un
+                        livre</button>
+                    <div id="past-liv-list">
+                        <div style="text-align:center;padding:30px;color:var(--mut)">⏳ Chargement…</div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- PAGE : PUBLICATIONS (Actualités + Témoignages fusionnés) -->
+            <div class="page" id="page-actu">
+                <!-- Header -->
+                <div class="feedhdr">
+                    <div class="feedttl" id="actu-ttl"></div>
+                    <div class="feedlive">
+                        <div class="ldot"></div>LIVE
+                    </div>
+                </div>
+                <!-- Compteur fidèles en ligne -->
+                <div class="online-pill" id="online-pill" style="display:none">
+                    <div class="online-dot"></div>
+                    <span id="online-count">0</span> <span id="online-lbl">en ligne</span>
+                </div>
+
+                <!-- Bouton publier -->
+                <div class="npbar" onclick="oM('mp')" style="margin-bottom:10px">
+                    <div style="font-size:24px">✍️</div>
+                    <div class="nptxt" id="np-txt"></div>
+                </div>
+
+                <!-- Filtres catégories -->
+                <div class="tcats" style="margin-bottom:12px">
+                    <button class="ttab2 on" onclick="filtFeed('all',this)" id="ff-all">🌟 Tout</button>
+                    <button class="ttab2" onclick="filtFeed('actu',this)" id="ff-actu">🌍 Actualités</button>
+                    <button class="ttab2" onclick="filtFeed('temoignage',this)" id="ff-temo">✨ Témoignages</button>
+                    <button class="ttab2" onclick="filtFeed('recit',this)" id="ff-rec">📖 Récits</button>
+                    <button class="ttab2" onclick="filtFeed('photo',this)" id="ff-photo">📷 Photos</button>
+                    <button class="ttab2" onclick="filtFeed('priere',this)" id="ff-pri">🙏 Prières</button>
+                </div>
+
+                <div id="feed-posts"></div>
+            </div>
+
+            <!-- PAGE : LIBRAIRIE -->
+            <div class="page" id="page-librairie">
+                <div class="libhdr">
+                    <div class="libttl" id="lib-ttl"></div>
+                </div>
+                <div class="libcats">
+                    <button class="libcat on" onclick="filtLiv('all',this)" id="lc-all"></button>
+                    <button class="libcat" onclick="filtLiv('bible',this)" id="lc-bib"></button>
+                    <button class="libcat" onclick="filtLiv('devotion',this)" id="lc-dev"></button>
+                    <button class="libcat" onclick="filtLiv('priere',this)" id="lc-pri"></button>
+                    <button class="libcat" onclick="filtLiv('enfant',this)" id="lc-enf"></button>
+                </div>
+                <div class="livgrid" id="liv-grid"></div>
+            </div>
+
+        </div><!-- /pages -->
+
+        <!-- NAVIGATION BAS -->
+        <nav class="nav">
+            <!-- Accueil -->
+            <button class="nb on" onclick="gP('accueil',this)">
+                <div class="nbic"><svg viewBox="0 0 24 24">
+                        <path d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H15v-5h-6v5H4a1 1 0 01-1-1z" />
+                    </svg></div>
+                <span id="nav-home"></span>
+            </button>
+            <!-- Bible -->
+            <button class="nb" onclick="gP('bible',this)">
+                <div class="nbic"><svg viewBox="0 0 24 24">
+                        <path d="M4 19.5A2.5 2.5 0 016.5 17H20" />
+                        <path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z" />
+                        <line x1="12" y1="6" x2="12" y2="10" />
+                        <line x1="10" y1="8" x2="14" y2="8" />
+                    </svg></div>
+                <span id="nav-bible"></span>
+            </button>
+            <!-- Méditation -->
+            <button class="nb" onclick="gP('meditation',this)">
+                <div class="nbic"><svg viewBox="0 0 24 24">
+                        <circle cx="12" cy="12" r="9" />
+                        <polyline points="12 7 12 12 15 15" />
+                    </svg></div>
+                <span id="nav-med"></span>
+            </button>
+            <!-- Pasteurs -->
+            <button class="nb" onclick="gP('pasteur',this)">
+                <div class="nbic"><svg viewBox="0 0 24 24">
+                        <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" />
+                        <circle cx="12" cy="7" r="4" />
+                    </svg></div>
+                <span id="nav-past"></span>
+            </button>
+            <!-- Actualités -->
+            <button class="nb" onclick="gP('actu',this)">
+                <div class="nbic"><svg viewBox="0 0 24 24">
+                        <circle cx="12" cy="12" r="10" />
+                        <line x1="2" y1="12" x2="22" y2="12" />
+                        <path
+                            d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z" />
+                    </svg></div>
+                <span id="nav-actu"></span>
+            </button>
+            <!-- Librairie -->
+            <button class="nb" onclick="gP('librairie',this)">
+                <div class="nbic"><svg viewBox="0 0 24 24">
+                        <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z" />
+                        <line x1="3" y1="6" x2="21" y2="6" />
+                        <path d="M16 10a4 4 0 01-8 0" />
+                    </svg></div>
+                <span id="nav-lib"></span>
+            </button>
+            <!-- Espace Pasteur — visible seulement si connecté -->
+            <button class="nb" id="nav-past-space" onclick="gP('past-space',this)" style="display:none">
+                <div class="nbic" style="background:rgba(107,63,160,.15);border-radius:12px">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                    </svg>
+                </div>
+                <span>Pasteur</span>
+            </button>
+        </nav>
+
+    </div><!-- /app -->
+
+    <!-- Header -->
+    <div class="adm-header">
+        <div class="adm-logo">✝ <span id="adm-panel-title">Espace Pasteur</span></div>
+        <div class="adm-hact">
+            <div class="adm-pbadge" id="adm-pbadge" style="display:none">
+                <div class="adm-dot"></div>
+                <span id="adm-pastor-name">Pasteur</span>
+            </div>
+            <button class="adm-hbtn" onclick="fermerAdmin()" style="font-size:18px;padding:5px 10px">✕</button>
+            <button class="adm-hbtn logout" id="adm-logout-btn" onclick="admDoLogout()"
+                style="display:none">Déconnexion</button>
+        </div>
+    </div>
+
+    <!-- LOGIN SCREEN -->
+    <div id="adm-login" style="flex:1;overflow-y:auto;padding:16px">
+        <div class="adm-lcard">
+            <div class="adm-lico">🔐</div>
+            <div class="adm-ltit">Espace Pasteur</div>
+            <div class="adm-lsub">Connectez-vous pour accéder à vos messages et gérer ZivOr.</div>
+            <input class="adm-linp" id="adm-email" type="email" placeholder="Email" autocomplete="email">
+            <input class="adm-linp" id="adm-pass" type="password" placeholder="Mot de passe"
+                onkeydown="if(event.key==='Enter')admDoLogin()">
+            <button class="adm-lbtn" onclick="admDoLogin()">Se connecter</button>
+            <div class="adm-lerr" id="adm-err"></div>
+            <div style="text-align:center;margin-top:14px">
+                <button onclick="admToggleSignup()"
+                    style="background:none;border:none;color:rgba(201,150,58,.7);font-size:12px;cursor:pointer;text-decoration:underline">
+                    Créer un compte pasteur
+                </button>
+            </div>
+            <!-- Formulaire inscription -->
+            <div id="adm-signup-form"
+                style="display:none;margin-top:14px;padding-top:14px;border-top:1px solid rgba(255,255,255,.1)">
+                <div
+                    style="font-size:11px;letter-spacing:1.5px;color:rgba(201,150,58,.8);font-weight:700;text-align:center;margin-bottom:12px">
+                    CRÉER UN COMPTE PASTEUR</div>
+                <input class="adm-linp" id="adm-s-prenom" type="text" placeholder="Prénom *">
+                <input class="adm-linp" id="adm-s-nom" type="text" placeholder="Nom *">
+                <input class="adm-linp" id="adm-s-eglise" type="text" placeholder="Nom de votre église *">
+                <input class="adm-linp" id="adm-s-tel" type="tel" placeholder="Téléphone *">
+                <input class="adm-linp" id="adm-s-email" type="email" placeholder="Email *">
+                <input class="adm-linp" id="adm-s-pass" type="password" placeholder="Mot de passe (6 min) *">
+                <input class="adm-linp" id="adm-s-pass2" type="password" placeholder="Confirmer le mot de passe *">
+                <button class="adm-lbtn" onclick="admDoSignup()"
+                    style="background:rgba(201,150,58,.2);color:var(--gold)">Créer le compte</button>
+                <div class="adm-lerr" id="adm-s-err"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MAIN SCREEN (après login) -->
+    <div id="adm-main" style="display:none;flex:1;overflow:hidden;flex-direction:column">
+        <div class="adm-layout" style="flex:1;overflow:hidden">
+
+            <!-- SIDEBAR -->
+            <div class="adm-sidebar" id="adm-sidebar">
+                <div class="adm-sidebar-hdr">
+                    <span class="adm-sidebar-title">💬 Conversations</span>
+                    <span class="adm-badge-cnt" id="adm-total-unread" style="display:none">0</span>
+                </div>
+
+                <!-- Onglets -->
+                <div class="adm-tabs">
+                    <div class="adm-tab active" id="adm-tab-msg" onclick="admSwitchTab('msg')">💬 Msgs</div>
+                    <div class="adm-tab" id="adm-tab-pub" onclick="admSwitchTab('pub')">📢 Publier</div>
+                    <div class="adm-tab" id="adm-tab-cmd" onclick="admSwitchTab('cmd')">📦 Cmdes</div>
+                    <div class="adm-tab" id="adm-tab-don" onclick="admSwitchTab('don')">💝 Dons</div>
+                    <div class="adm-tab" id="adm-tab-liv" onclick="admSwitchTab('liv')">📚 Livres</div>
+                    <div class="adm-tab" id="adm-tab-req" onclick="admSwitchTab('req')">📋 Dem.</div>
+                </div>
+
+                <!-- MESSAGES -->
+                <div class="adm-tab-panel active" id="adm-panel-msg">
+                    <div class="adm-search-wrap">
+                        <input class="adm-search-inp" id="adm-search-conv" type="search" placeholder="🔍 Rechercher..."
+                            oninput="admFiltrerConv()">
+                    </div>
+                    <div class="adm-conv-list" id="adm-conv-list">
+                        <div class="adm-empty-conv">⏳ Chargement…</div>
+                    </div>
+                </div>
+
+                <!-- PUBLIER -->
+                <div class="adm-tab-panel" id="adm-panel-pub">
+                    <div style="padding:16px;display:flex;flex-direction:column;gap:12px">
+                        <div style="font-size:13px;font-weight:600;color:var(--gold2)">📢 Publier une actualité</div>
+                        <div class="adm-aform-row">
+                            <label class="adm-aform-lbl">CATÉGORIE</label>
+                            <select class="adm-aform-inp" id="adm-pub-cat">
+                                <option value="hafatra">✦ Hafatra / Message</option>
+                                <option value="evanjely">✦ Evanjely</option>
+                                <option value="fiderana">🙌 Fiderana / Louange</option>
+                                <option value="vaovao">🌍 Vaovao / Nouvelles</option>
+                            </select>
+                        </div>
+                        <div class="adm-aform-row">
+                            <label class="adm-aform-lbl">MESSAGE *</label>
+                            <textarea class="adm-aform-inp" id="adm-pub-txt" rows="4" maxlength="500"
+                                placeholder="Écrivez votre message..."></textarea>
+                        </div>
+                        <div class="adm-aform-row">
+                            <label class="adm-aform-lbl">VERSET (optionnel)</label>
+                            <input class="adm-aform-inp" id="adm-pub-vs" type="text" placeholder="Ex: Jean 3:16">
+                        </div>
+                        <div class="adm-aform-row">
+                            <label class="adm-aform-lbl">📷 PHOTO (optionnel)</label>
+                            <label
+                                style="display:flex;align-items:center;gap:10px;cursor:pointer;background:var(--inp-bg);border:1px dashed var(--inp-border);border-radius:9px;padding:10px 13px">
+                                <span>📷</span>
+                                <span id="adm-pub-img-lbl" style="font-size:13px;color:var(--mut)">Choisir...</span>
+                                <input type="file" accept="image/*" id="adm-pub-img-file" style="display:none"
+                                    onchange="admPreviewPhoto(this)">
+                            </label>
+                            <div id="adm-pub-img-preview" style="display:none;margin-top:8px;position:relative">
+                                <img id="adm-pub-img"
+                                    style="width:100%;border-radius:9px;max-height:180px;object-fit:cover">
+                                <button onclick="admClearPhoto()"
+                                    style="position:absolute;top:6px;right:6px;background:rgba(0,0,0,.7);border:none;color:#fff;border-radius:50%;width:24px;height:24px;font-size:13px;cursor:pointer">✕</button>
+                            </div>
+                        </div>
+                        <button onclick="admPublierActualite()" class="btng">📢 Publier maintenant</button>
+                        <div style="border-top:1px solid var(--border);padding-top:12px">
+                            <div style="font-size:13px;font-weight:600;color:var(--gold2);margin-bottom:10px">📋
+                                Dernières publications</div>
+                            <div id="adm-pub-recent" style="font-size:12px;color:var(--mut)">⏳ Chargement…</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- COMMANDES -->
+                <div class="adm-tab-panel" id="adm-panel-cmd">
+                    <div class="adm-stat-row">
+                        <div class="adm-stat-card">
+                            <div class="adm-stat-num" id="adm-cmd-wait">—</div>
+                            <div class="adm-stat-lbl">⏳ En attente</div>
+                        </div>
+                        <div class="adm-stat-card">
+                            <div class="adm-stat-num" id="adm-cmd-ok">—</div>
+                            <div class="adm-stat-lbl">✅ Validées</div>
+                        </div>
+                    </div>
+                    <div id="adm-cmd-list" style="padding:4px 0">
+                        <div class="adm-empty-conv">⏳ Chargement…</div>
+                    </div>
+                </div>
+
+                <!-- DONS -->
+                <div class="adm-tab-panel" id="adm-panel-don">
+                    <div class="adm-stat-row">
+                        <div class="adm-stat-card">
+                            <div class="adm-stat-num" id="adm-don-wait">—</div>
+                            <div class="adm-stat-lbl">⏳ Non confirmés</div>
+                        </div>
+                        <div class="adm-stat-card">
+                            <div class="adm-stat-num" id="adm-don-total">—</div>
+                            <div class="adm-stat-lbl">💰 Total Ar</div>
+                        </div>
+                    </div>
+                    <div id="adm-don-list" style="padding:4px 0">
+                        <div class="adm-empty-conv">⏳ Chargement…</div>
+                    </div>
+                </div>
+
+                <!-- LIVRES -->
+                <div class="adm-tab-panel" id="adm-panel-liv">
+                    <div style="padding:12px 16px;border-bottom:1px solid var(--border)">
+                        <button onclick="admOuvrirModalLivre()" class="btng" style="padding:11px">➕ Ajouter un
+                            livre</button>
+                    </div>
+                    <div id="adm-liv-list" style="padding:4px 0">
+                        <div class="adm-empty-conv">⏳ Chargement…</div>
+                    </div>
+                </div>
+
+                <!-- DEMANDES -->
+                <div class="adm-tab-panel" id="adm-panel-req">
+                    <div id="adm-req-list" style="padding:8px 0">
+                        <div class="adm-empty-conv">⏳ Chargement…</div>
+                    </div>
+                </div>
+
+            </div><!-- /sidebar -->
+
+            <!-- ZONE CHAT -->
+            <div class="adm-chat-area" id="adm-chat-area">
+                <div class="adm-chat-placeholder" id="adm-chat-placeholder">
+                    <div style="font-size:48px;margin-bottom:12px">💬</div>
+                    <p style="color:var(--mut);font-size:14px;text-align:center">Sélectionnez une conversation</p>
+                </div>
+                <div id="adm-chat-view" style="display:none;flex-direction:column;height:100%;flex:1">
+                    <div class="adm-chat-header" id="adm-chat-header">
+                        <button class="adm-back-btn" onclick="admBackToList()">←</button>
+                        <div style="flex:1">
+                            <div style="font-size:14px;font-weight:700;color:var(--cream)" id="adm-cv-name"></div>
+                            <div style="font-size:11px;color:var(--mut)" id="adm-cv-info"></div>
+                        </div>
+                    </div>
+                    <div class="adm-chat-msgs" id="adm-chat-msgs"></div>
+                    <div class="adm-chat-footer">
+                        <input class="adm-chat-inp" id="adm-chat-inp" placeholder="Répondre..."
+                            onkeydown="if(event.key==='Enter')admEnvoyerReponse()">
+                        <button class="adm-chat-send" onclick="admEnvoyerReponse()">➤</button>
+                    </div>
+                </div>
+            </div>
+
+        </div><!-- /layout -->
+    </div><!-- /main -->
+
+    </div><!-- /adm-panel -->
+
+    <!-- Modal livre admin -->
+
+
+    <!-- ═══════════════════════════════════════════
+     PANNEAU CHAT PASTEUR (slide-up)
+════════════════════════════════════════════ -->
+    <div class="cpanel" id="cpanel">
+        <div class="chead">
+            <div class="cav2" id="cav2">🙏</div>
+            <div>
+                <div class="cnam2" id="cnam2"></div>
+                <div class="ctel2" id="ctel2"></div>
+            </div>
+            <span class="fbstat fboff" id="fbstat">●</span>
+            <button class="cclose" onclick="xChat()">✕</button>
+        </div>
+        <div class="cmsgs" id="cmsgs"></div>
+        <div class="typi" id="typi"></div>
+        <div class="cinprow">
+            <input type="text" class="cinp" id="cinp" onkeydown="if(event.key==='Enter')sMsg()">
+            <button class="csend" onclick="sMsg()">➤</button>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════
+     PANNEAU DÉTAIL LIVRE (slide-up)
+════════════════════════════════════════════ -->
+    <div class="lvdpanel" id="lvdpanel">
+        <div class="lvdhead">
+            <button class="lvdback" onclick="closeLivre()">←</button>
+            <div class="lvdtit2" id="lvd-tit"></div>
+        </div>
+        <div class="lvdbody">
+            <div class="lvdbigimg" id="lvd-img"></div>
+            <div class="lvdnm" id="lvd-nm"></div>
+            <div class="lvdaut" id="lvd-aut"></div>
+            <div class="lvdpx" id="lvd-px"></div>
+            <div class="lvdstock" id="lvd-stock"></div>
+            <div class="lvddesc" id="lvd-desc"></div>
+            <div class="cmdform" id="cmd-form" style="display:none">
+                <div style="font-size:12px;letter-spacing:1.5px;color:var(--gold);font-weight:700;margin-bottom:10px">📦
+                    PASSER UNE COMMANDE</div>
+                <!-- Choix opérateur paiement -->
+                <div class="mmrow" style="margin-bottom:12px">
+                    <button class="mmbtn mvola" onclick="selMMCmd(this,'mvola')">📱 MVola</button>
+                    <button class="mmbtn orange" onclick="selMMCmd(this,'orange')">🟠 Orange</button>
+                    <button class="mmbtn airtel" onclick="selMMCmd(this,'airtel')">🔴 Airtel</button>
+                </div>
+                <div class="mvolabx" id="cmd-mm-instr" style="display:none">
+                    <div class="mvolaic">📱</div>
+                    <div class="mvolatxt" id="mvola-txt"></div>
+                </div>
+                <label class="cmdlbl" id="cmd-tel-lbl">TON NUMÉRO</label>
+                <input class="cmdinp" id="cmd-tel" type="tel" placeholder="034 XX XXX XX">
+                <label class="cmdlbl" style="margin-top:4px">N° TRANSACTION MVola/Orange</label>
+                <input class="cmdinp" id="cmd-ref" type="text" placeholder="Ex: TXN123456 (optionnel)">
+                <label class="cmdlbl" style="margin-top:4px">ADRESSE DE LIVRAISON</label>
+                <input class="cmdinp" id="cmd-addr" type="text" placeholder="Quartier, ville...">
+                <button class="btng" id="cmd-btn" onclick="commander()"></button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════
+     MODAL — Nouvelle publication (unifié)
+════════════════════════════════════════════ -->
+    <div class="modal" id="mp">
+        <div class="mbox" style="padding-bottom:40px">
+            <button class="mclose" onclick="cM('mp')">✕</button>
+
+            <!-- Header style Facebook -->
+            <div style="display:flex;align-items:center;gap:11px;margin-bottom:14px">
+                <div style="width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,rgba(201,150,58,.2),rgba(107,63,160,.15));border:2px solid rgba(201,150,58,.2);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0"
+                    id="mp-avatar-preview">😊</div>
+                <div style="flex:1">
+                    <div style="font-size:14px;font-weight:700;color:var(--cream)" id="mp-user-name">Anonyme</div>
+                    <!-- Type selector compact -->
+                    <div style="display:flex;gap:5px;margin-top:5px;flex-wrap:wrap">
+                        <button class="pub-type on" data-type="actu" onclick="selPubType(this)"
+                            style="font-size:11px;padding:3px 9px">🌍 Actualité</button>
+                        <button class="pub-type" data-type="temoignage" onclick="selPubType(this)"
+                            style="font-size:11px;padding:3px 9px">✨ Témoignage</button>
+                        <button class="pub-type" data-type="recit" onclick="selPubType(this)"
+                            style="font-size:11px;padding:3px 9px">📖 Récit</button>
+                        <button class="pub-type" data-type="photo" onclick="selPubType(this)"
+                            style="font-size:11px;padding:3px 9px">📷 Photo</button>
+                        <button class="pub-type" data-type="priere" onclick="selPubType(this)"
+                            style="font-size:11px;padding:3px 9px">🙏 Prière</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Titre (optionnel / requis selon type) -->
+            <div class="mrow" id="mp-titre-row" style="display:none">
+                <input class="minp" id="mp-titre" type="text" placeholder="Titre...">
+            </div>
+
+            <!-- Zone texte principale — style Facebook -->
+            <textarea class="mtarea" id="ptxt" maxlength="2000" rows="4"
+                style="border:none;background:none;padding:0;font-size:16px;resize:none;min-height:80px;outline:none"
+                placeholder="Quoi de neuf ? Partagez votre message..."></textarea>
+
+            <!-- Prévisualisation photo PLEINE LARGEUR -->
+            <div id="mp-photo-preview" style="display:none;margin:10px -19px;position:relative">
+                <img id="mp-photo-img" style="width:100%;max-height:300px;object-fit:cover;display:block">
+                <button onclick="clearPubPhoto()"
+                    style="position:absolute;top:8px;right:8px;background:rgba(0,0,0,.65);border:none;color:#fff;border-radius:50%;width:30px;height:30px;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center">✕</button>
+            </div>
+
+            <!-- Verset biblique compact -->
+            <input class="minp" id="pvs" type="text" placeholder="📖 Verset biblique (optionnel)"
+                style="margin-top:10px;font-size:13px">
+
+            <!-- Séparateur -->
+            <div style="height:1px;background:var(--border);margin:12px 0"></div>
+
+            <!-- Barre d'actions style Facebook -->
+            <div style="display:flex;align-items:center;justify-content:space-between">
+                <div style="display:flex;gap:6px">
+                    <!-- Bouton photo — en évidence -->
+                    <label
+                        style="display:flex;align-items:center;gap:6px;padding:8px 12px;border-radius:20px;background:rgba(76,175,125,.1);border:1px solid rgba(76,175,125,.2);cursor:pointer;color:var(--grn);font-size:13px;font-weight:600">
+                        📷
+                        <span style="font-size:12px" id="mp-photo-lbl">Photo</span>
+                        <input type="file" accept="image/*" id="mp-photo-file" style="display:none"
+                            onchange="previewPubPhoto(this)">
+                    </label>
+                    <!-- Nom -->
+                    <input id="mp-auteur" type="text" placeholder="Votre nom..."
+                        style="background:var(--inp-bg);border:1px solid var(--inp-border);color:var(--cream);padding:8px 12px;border-radius:20px;font-size:12px;font-family:var(--f-body);width:130px;outline:none">
+                </div>
+                <button class="btng" id="mp-btn" onclick="pubPost()"
+                    style="width:auto;padding:10px 22px;font-size:14px">📤 Publier</button>
+            </div>
+
+            <input type="hidden" id="mp-titre-req">
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════
+     MODAL — Inscription Pasteur
+════════════════════════════════════════════ -->
+    <div class="modal" id="mi">
+        <div class="mbox">
+            <button class="mclose" onclick="cM('mi')">✕</button>
+            <h2 id="mi-title"></h2>
+            <div class="mrow"><label id="mi-nom-lbl"></label> <input class="minp" id="mi-nom" type="text"></div>
+            <div class="mrow"><label id="mi-email-lbl"></label><input class="minp" id="mi-email" type="email"></div>
+            <div class="mrow"><label id="mi-tel-lbl"></label> <input class="minp" id="mi-tel" type="tel"></div>
+            <div class="mrow"><label id="mi-egl-lbl"></label> <input class="minp" id="mi-egl" type="text"></div>
+            <div class="mrow"><label id="mi-spec-lbl"></label> <input class="minp" id="mi-spec" type="text"></div>
+            <button class="btng" id="mi-btn" onclick="submitPasteur()"></button>
+        </div>
+    </div>
+
+
+
+    <script src="js/ui-helpers.js"></script>
+    <script src="js/bible-data.js"></script>
+    <script src="js/bible-engine.js"></script>
+    <script src="js/audio-player.js"></script>
+    <script src="js/app.js"></script>
+    <!-- ═══════════════════════════════════════════
+     MODAL — Don Mobile Money
+════════════════════════════════════════════ -->
+    <div class="modal" id="modal-don">
+        <div class="mbox">
+            <button class="mclose" onclick="cM('modal-don')">✕</button>
+            <h2 id="mdon-title">💝 Faire un don</h2>
+            <div
+                style="background:rgba(201,150,58,.07);border:1px solid rgba(201,150,58,.2);border-radius:12px;padding:14px;margin-bottom:14px;text-align:center">
+                <div style="font-size:11px;letter-spacing:2px;color:var(--mut);margin-bottom:4px">MONTANT SÉLECTIONNÉ
+                </div>
+                <div style="font-family:var(--f-serif);font-size:28px;font-weight:700;color:var(--gold2)" id="mdon-amt">
+                    2 000 Ar</div>
+                <div style="font-size:12px;color:var(--mut);margin-top:2px" id="mdon-op">via MVola</div>
+            </div>
+            <!-- Instructions -->
+            <div style="background:var(--card);border-radius:12px;padding:14px;margin-bottom:14px" id="mdon-instr">
+                <div style="font-size:13px;color:var(--cream);line-height:1.9" id="mdon-steps"></div>
+            </div>
+            <div class="mrow">
+                <label
+                    style="font-size:10px;letter-spacing:1.5px;color:var(--mut);font-weight:700;display:block;margin-bottom:6px">TON
+                    NUMÉRO (confirmation)</label>
+                <input class="minp" id="don-tel" type="tel" placeholder="034 XX XXX XX">
+            </div>
+            <div class="mrow">
+                <label
+                    style="font-size:10px;letter-spacing:1.5px;color:var(--mut);font-weight:700;display:block;margin-bottom:6px">N°
+                    TRANSACTION (optionnel)</label>
+                <input class="minp" id="don-ref" type="text" placeholder="Ex: TXN123456">
+            </div>
+            <button class="btng" id="mdon-btn" onclick="confirmerDon()">✅ Confirmer mon don</button>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════
+     BANNIÈRE INSTALLATION PWA
+════════════════════════════════════════════ -->
+    <div class="install-bar" id="install-bar">
+        <div
+            style="flex:1;display:flex;flex-direction:column;align-items:center;padding:40px 22px 24px;text-align:center;overflow-y:auto">
+
+            <!-- Logo + titre -->
+            <div
+                style="width:84px;height:84px;border-radius:20px;background:linear-gradient(135deg,var(--gold),var(--pur));display:flex;align-items:center;justify-content:center;font-size:40px;box-shadow:0 8px 32px rgba(201,150,58,.4);margin-bottom:16px;flex-shrink:0">
+                ✝</div>
+            <div style="font-family:var(--f-serif);font-size:26px;font-weight:700;color:var(--gold2);margin-bottom:3px">
+                ZivOr</div>
+            <div style="font-size:12px;color:var(--mut);margin-bottom:26px">Application chrétienne · Madagascar</div>
+
+            <!-- BOUTON PRINCIPAL — toujours visible -->
+            <button id="install-main-btn" onclick="installPWA()"
+                style="display:none;width:100%;max-width:300px;background:linear-gradient(135deg,var(--gold),#8B6914);border:none;color:#000;font-weight:800;font-size:16px;padding:16px 24px;border-radius:16px;cursor:pointer;font-family:var(--f-body);box-shadow:0 4px 20px rgba(201,150,58,.4);margin-bottom:10px">
+                📲 Ajouter à l'écran d'accueil
+            </button>
+
+            <!-- Guide étapes (affiché quand on clique le bouton ou iOS) -->
+            <div id="install-steps-manual"
+                style="display:none;width:100%;max-width:300px;text-align:left;margin-bottom:10px"></div>
+
+            <!-- Lien "continuer sans installer" -->
+            <button onclick="dismissInstall()"
+                style="background:none;border:none;color:var(--mut);font-size:13px;cursor:pointer;font-family:var(--f-body);padding:14px;margin-top:6px">
+                Continuer sans installer
+            </button>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════
+     MODAL — PROFIL UTILISATEUR
+════════════════════════════════════════════ -->
+    <!-- ═══════════════════════════════════════════
+     MODAL — CONNEXION / INSCRIPTION PASTEUR
+════════════════════════════════════════════ -->
+    <div class="modal" id="modal-past-auth">
+        <div class="mbox" style="position:relative">
+            <button class="mclose" onclick="cM('modal-past-auth')">✕</button>
+            <h2>🙏 Espace Pasteur</h2>
+
+            <!-- Tabs login/signup -->
+            <div
+                style="display:flex;gap:0;margin-bottom:18px;border-radius:12px;overflow:hidden;border:1px solid var(--border)">
+                <button id="past-tab-login" onclick="pastToggleAuthTab('login')"
+                    style="flex:1;padding:10px;background:var(--gold);color:#000;font-weight:700;border:none;cursor:pointer;font-family:var(--f-body);font-size:13px">
+                    Se connecter
+                </button>
+                <button id="past-tab-signup" onclick="pastToggleAuthTab('signup')"
+                    style="flex:1;padding:10px;background:var(--inp-bg);color:var(--mut);border:none;cursor:pointer;font-family:var(--f-body);font-size:13px">
+                    S'inscrire
+                </button>
+            </div>
+
+            <!-- LOGIN -->
+            <div id="past-login-form">
+                <div class="mrow"><label>EMAIL</label><input class="minp" id="past-l-email" type="email"
+                        placeholder="Email pasteur..."></div>
+                <div class="mrow"><label>MOT DE PASSE</label><input class="minp" id="past-l-pass" type="password"
+                        placeholder="Mot de passe..." onkeydown="if(event.key==='Enter')pastDoLogin()"></div>
+                <div style="color:var(--red);font-size:12px;margin-bottom:10px;min-height:16px" id="past-l-err"></div>
+                <button class="btng" id="past-l-btn" onclick="pastDoLogin()">🔐 Se connecter</button>
+            </div>
+
+            <!-- INSCRIPTION -->
+            <div id="past-signup-form" style="display:none">
+                <div class="mrow"><label>PRÉNOM *</label><input class="minp" id="past-s-prenom" type="text"
+                        placeholder="Votre prénom..."></div>
+                <div class="mrow"><label>NOM *</label><input class="minp" id="past-s-nom" type="text"
+                        placeholder="Votre nom..."></div>
+                <div class="mrow"><label>ÉGLISE *</label><input class="minp" id="past-s-eglise" type="text"
+                        placeholder="Nom de votre église..."></div>
+                <div class="mrow"><label>TÉLÉPHONE *</label><input class="minp" id="past-s-tel" type="tel"
+                        placeholder="034 XX XXX XX"></div>
+                <div class="mrow"><label>VILLE</label><input class="minp" id="past-s-ville" type="text"
+                        placeholder="Antananarivo, ..."></div>
+                <div class="mrow"><label>EMAIL *</label><input class="minp" id="past-s-email" type="email"
+                        placeholder="Email..."></div>
+                <div class="mrow"><label>MOT DE PASSE * (6 min)</label><input class="minp" id="past-s-pass"
+                        type="password" placeholder="Mot de passe..."></div>
+                <div class="mrow"><label>CONFIRMER MOT DE PASSE *</label><input class="minp" id="past-s-pass2"
+                        type="password" placeholder="Confirmer..."></div>
+                <div style="color:var(--red);font-size:12px;margin-bottom:10px;min-height:16px" id="past-s-err"></div>
+                <button class="btng" id="past-s-btn" onclick="pastDoSignup()">✝ Créer mon compte pasteur</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════
+     MODAL — AJOUTER LIVRE (Pasteur)
+════════════════════════════════════════════ -->
+    <div class="modal" id="modal-past-livre">
+        <div class="mbox" style="position:relative">
+            <button class="mclose" onclick="cM('modal-past-livre')">✕</button>
+            <h2>📚 Ajouter un livre</h2>
+            <div class="mrow"><label>TITRE (MG) *</label><input class="minp" id="pl-tit-mg" type="text"
+                    placeholder="Titre en malgache..."></div>
+            <div class="mrow"><label>TITRE (FR)</label><input class="minp" id="pl-tit-fr" type="text"
+                    placeholder="Titre en français..."></div>
+            <div class="mrow"><label>AUTEUR *</label><input class="minp" id="pl-aut" type="text"
+                    placeholder="Auteur..."></div>
+            <div class="mrow"><label>PRIX (Ar) *</label><input class="minp" id="pl-prix" type="number"
+                    placeholder="Ex: 25000"></div>
+            <div class="mrow"><label>CATÉGORIE</label>
+                <select class="minp" id="pl-cat">
+                    <option value="bible">📖 Bible</option>
+                    <option value="devotion">🌅 Dévotion</option>
+                    <option value="priere">🙏 Prière</option>
+                    <option value="enfant">👶 Enfant</option>
+                </select>
+            </div>
+            <div class="mrow"><label>DESCRIPTION</label><textarea class="mtarea" id="pl-desc"
+                    placeholder="Description..."></textarea></div>
+            <button class="btng" onclick="pastSauvegarderLivre()">💾 Sauvegarder</button>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════
+     MODAL — DONS ADMIN (Code PIN secret)
+════════════════════════════════════════════ -->
+    <div class="modal" id="modal-admin-dons">
+        <div class="mbox" style="position:relative">
+            <button class="mclose"
+                onclick="cM('modal-admin-dons');adminDonsLocked=true;_('admin-dons-lock').style.display='';_('admin-dons-content').style.display='none'">✕</button>
+
+            <!-- Écran PIN -->
+            <div id="admin-dons-lock">
+                <div style="text-align:center;margin-bottom:18px">
+                    <div style="font-size:44px;margin-bottom:8px">🔐</div>
+                    <div style="font-family:var(--f-serif);font-size:18px;color:var(--gold2);margin-bottom:5px">Espace
+                        Admin</div>
+                    <div style="font-size:12px;color:var(--mut)">Entrez votre code PIN à 6 chiffres</div>
+                </div>
+                <!-- Affichage PIN -->
+                <div style="display:flex;justify-content:center;gap:8px;margin-bottom:20px" id="pin-dots">
+                    <div class="pin-dot" id="pd1"></div>
+                    <div class="pin-dot" id="pd2"></div>
+                    <div class="pin-dot" id="pd3"></div>
+                    <div class="pin-dot" id="pd4"></div>
+                    <div class="pin-dot" id="pd5"></div>
+                    <div class="pin-dot" id="pd6"></div>
+                </div>
+                <!-- Clavier PIN -->
+                <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;max-width:240px;margin:0 auto">
+                    <button class="pin-key" onclick="pinPress('1')">1</button>
+                    <button class="pin-key" onclick="pinPress('2')">2</button>
+                    <button class="pin-key" onclick="pinPress('3')">3</button>
+                    <button class="pin-key" onclick="pinPress('4')">4</button>
+                    <button class="pin-key" onclick="pinPress('5')">5</button>
+                    <button class="pin-key" onclick="pinPress('6')">6</button>
+                    <button class="pin-key" onclick="pinPress('7')">7</button>
+                    <button class="pin-key" onclick="pinPress('8')">8</button>
+                    <button class="pin-key" onclick="pinPress('9')">9</button>
+                    <button class="pin-key" onclick="pinClear()"
+                        style="font-size:11px;color:var(--mut)">Effacer</button>
+                    <button class="pin-key" onclick="pinPress('0')">0</button>
+                    <button class="pin-key" onclick="pinDel()" style="font-size:18px">⌫</button>
+                </div>
+                <div id="pin-err"
+                    style="text-align:center;color:var(--red);font-size:12px;margin-top:12px;min-height:18px"></div>
+                <!-- Changer PIN -->
+                <div style="text-align:center;margin-top:14px">
+                    <button onclick="adminChangerPIN()"
+                        style="background:none;border:none;color:var(--mut);font-size:11px;cursor:pointer;text-decoration:underline">Changer
+                        le PIN</button>
+                </div>
+            </div>
+
+            <!-- Contenu dons (après PIN) -->
+            <div id="admin-dons-content" style="display:none">
+                <h2>💝 Dons reçus</h2>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px">
+                    <div class="card" style="text-align:center;padding:13px">
+                        <div style="font-family:var(--f-serif);font-size:26px;font-weight:700;color:var(--gold2)"
+                            id="admin-don-cnt">—</div>
+                        <div style="font-size:11px;color:var(--mut)">💝 Total dons</div>
+                    </div>
+                    <div class="card" style="text-align:center;padding:13px">
+                        <div style="font-family:var(--f-serif);font-size:22px;font-weight:700;color:var(--gold)"
+                            id="admin-don-total">—</div>
+                        <div style="font-size:11px;color:var(--mut)">💰 Montant Ar</div>
+                    </div>
+                </div>
+                <div id="admin-don-list"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="modal-profil">
+        <div class="mbox" style="position:relative">
+            <button class="mclose" onclick="cM('modal-profil')">✕</button>
+            <div class="profil-ico" id="profil-ico">👤</div>
+            <div class="profil-name" id="profil-nom-display">Mon Profil</div>
+            <div class="profil-sub" id="profil-sub-display">Remplissez vos informations</div>
+            <div class="mrow">
+                <label id="lbl-prenom">PRÉNOM *</label>
+                <input class="minp" id="profil-prenom" type="text" placeholder="Votre prénom...">
+            </div>
+            <div class="mrow">
+                <label id="lbl-nom">NOM *</label>
+                <input class="minp" id="profil-nom" type="text" placeholder="Votre nom de famille...">
+            </div>
+            <div class="mrow">
+                <label id="lbl-adresse">ADRESSE / VILLE *</label>
+                <input class="minp" id="profil-adresse" type="text" placeholder="Ex: Antananarivo, Analakely...">
+            </div>
+            <div class="mrow">
+                <label id="lbl-tel-profil">TÉLÉPHONE (optionnel)</label>
+                <input class="minp" id="profil-tel" type="tel" placeholder="034 XX XXX XX">
+            </div>
+            <div class="mrow">
+                <label id="lbl-eglise">ÉGLISE (optionnel)</label>
+                <input class="minp" id="profil-eglise" type="text" placeholder="Nom de votre église...">
+            </div>
+            <button class="btng" onclick="sauvegarderProfil()">💾 Sauvegarder</button>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════
+     MODAL — MES FAVORIS BIBLE
+════════════════════════════════════════════ -->
+    <div class="modal" id="modal-favoris">
+        <div class="mbox" style="position:relative;max-height:85vh">
+            <button class="mclose" onclick="cM('modal-favoris')">✕</button>
+            <h2>⭐ Mes versets favoris</h2>
+            <div id="favoris-list"></div>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════
+     MODAL — SIGNALER UN CONTENU
+════════════════════════════════════════════ -->
+    <div class="modal" id="modal-report">
+        <div class="mbox" style="position:relative">
+            <button class="mclose" onclick="cM('modal-report')">✕</button>
+            <h2>🚩 Signaler ce contenu</h2>
+            <div style="font-size:13px;color:var(--mut);margin-bottom:14px;line-height:1.7">Ce contenu vous semble
+                inapproprié pour une communauté chrétienne ?</div>
+            <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px" id="report-reasons">
+                <button onclick="selReport(this)" class="minp" style="text-align:left;cursor:pointer;padding:11px 14px"
+                    data-reason="inapproprie">⛔ Contenu inapproprié</button>
+                <button onclick="selReport(this)" class="minp" style="text-align:left;cursor:pointer;padding:11px 14px"
+                    data-reason="fausse_info">❌ Fausse information</button>
+                <button onclick="selReport(this)" class="minp" style="text-align:left;cursor:pointer;padding:11px 14px"
+                    data-reason="spam">🗑️ Spam / Publicité</button>
+                <button onclick="selReport(this)" class="minp" style="text-align:left;cursor:pointer;padding:11px 14px"
+                    data-reason="haineux">😡 Contenu haineux</button>
+            </div>
+            <button class="btng" id="report-btn" onclick="envoyerSignalement()" disabled style="opacity:.4">🚩
+                Signaler</button>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════
+     MODAL — PROFIL REQUIS (avant chat)
+════════════════════════════════════════════ -->
+    <div class="modal" id="modal-profil-chat">
+        <div class="mbox" style="position:relative">
+            <button class="mclose" onclick="cM('modal-profil-chat')">✕</button>
+            <div style="text-align:center;margin-bottom:16px">
+                <div style="font-size:42px;margin-bottom:8px">🙏</div>
+                <h2 style="text-align:center" id="chat-profil-titre">Avant de contacter le pasteur</h2>
+                <div style="font-size:13px;color:var(--mut);margin-top:5px;line-height:1.7" id="chat-profil-sub">Le
+                    pasteur a besoin de connaître votre identité pour vous aider.</div>
+            </div>
+            <div class="mrow">
+                <label>PRÉNOM *</label>
+                <input class="minp" id="cp-prenom" type="text" placeholder="Votre prénom...">
+            </div>
+            <div class="mrow">
+                <label>NOM *</label>
+                <input class="minp" id="cp-nom" type="text" placeholder="Votre nom...">
+            </div>
+            <div class="mrow">
+                <label>ADRESSE / VILLE *</label>
+                <input class="minp" id="cp-adresse" type="text" placeholder="Ex: Antananarivo...">
+            </div>
+            <div class="mrow">
+                <label>TÉLÉPHONE (optionnel)</label>
+                <input class="minp" id="cp-tel" type="tel" placeholder="034 XX XXX XX">
+            </div>
+            <button class="btng" id="cp-btn" onclick="validerProfilChat()">💬 Ouvrir le chat</button>
+        </div>
+    </div>
+
+</body>
+
+</html>

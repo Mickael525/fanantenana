@@ -1,0 +1,65 @@
+{
+  "name": "ZivOr — Espoir · Hope",
+  "short_name": "ZivOr",
+  "description": "Application évangélique chrétienne — Madagascar. Bible, méditation, pasteurs, témoignages.",
+  "start_url": "./index.html",
+  "id": "com.zivor.app",
+  "display": "standalone",
+  "display_override": ["window-controls-overlay", "standalone", "minimal-ui"],
+  "background_color": "#05030f",
+  "theme_color": "#C9963A",
+  "orientation": "portrait-primary",
+  "lang": "mg",
+  "dir": "ltr",
+  "scope": "./",
+  "categories": ["lifestyle", "education", "religion"],
+  "prefer_related_applications": false,
+  "icons": [
+    { "src": "icon-72.png",  "sizes": "72x72",   "type": "image/png", "purpose": "any" },
+    { "src": "icon-144.png", "sizes": "144x144", "type": "image/png", "purpose": "any" },
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable" },
+    { "src": "icon-384.png", "sizes": "384x384", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "screenshots": [
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "ZivOr — Accueil"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "ZivOr — Bible"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Bible",
+      "short_name": "Bible",
+      "description": "Ouvrir la Bible",
+      "url": "./index.html#bible",
+      "icons": [{ "src": "icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Méditation",
+      "short_name": "Méditation",
+      "description": "Timer de méditation",
+      "url": "./index.html#meditation",
+      "icons": [{ "src": "icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Pasteurs",
+      "short_name": "Pasteurs",
+      "description": "Contacter un pasteur",
+      "url": "./index.html#pasteur",
+      "icons": [{ "src": "icon-192.png", "sizes": "192x192" }]
+    }
+  ]
+}
